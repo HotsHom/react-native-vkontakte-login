@@ -6,10 +6,6 @@ import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource'
  * @hidden
  */
 const VKLogin: any = NativeModules.VkontakteManager;
-/**
- * @hidden
- */
-const VKShare: any = NativeModules.VkontakteSharing;
 
 /**
  * Response from login method
@@ -82,17 +78,6 @@ export const enum VKError {
  * Provides login and share functionality
  */
 export class VK {
-
-  /**
-   * Initializes VK SDK from JS code.
-   * You only need to call this once before you call login or logout.
-   * You can skip this call if you've added your VK App ID to your Android's resources or iOS's info.plist.
-   * @param {number|string} vkAppId Your VK app id
-   */
-  static initialize(vkAppId: number | string): void {
-    VKLogin.initialize(typeof vkAppId === 'number' ? vkAppId : Number(vkAppId));
-  }
-
   /**
    * Opens VK login dialog either via VK mobile app or via WebView (if app is not installed on the device).
    * If the user is already logged in and has all the requested permissions, then the promise is resolved
@@ -120,39 +105,6 @@ export class VK {
    */
   static isLoggedIn(): Promise<boolean> {
     return VKLogin.isLoggedIn();
-  }
-
-  /**
-   * Returns VK access token (if it exists)
-   * @returns {Promise<boolean>} Promise that resolves with VKLoginResult or null
-   */
-  static getAccessToken(): Promise<VKLoginResult | null> {
-    return VKLogin.getAccessToken();
-  }
-
-  /**
-   * Opens VK share dialog either via VK mobile app or via WebView (if app is not installed on the device).
-   * Make sure to have correct permissions!
-   * @param {VKShareOptions} options VKShareOptions object
-   * @returns {Promise<number>} Promise that resolves with postId number
-   */
-  static share(options: VKShareOptions): Promise<number> {
-    if (options.image) {
-      options.image = resolveAssetSource(options.image).uri;
-    }
-    return VKShare.share(options);
-  }
-
-  /**
-   * **Android only** - helper method to get fingerprints on JS side
-   * @returns {Promise<string[]>} Promise that resolves with array of string fingerprints
-   */
-  static getCertificateFingerprint(): Promise<string[]> {
-    if (Platform.OS !== 'android') {
-      console.warn('getCertificateFingerprint is for Android only');
-      return Promise.resolve([]);
-    }
-    return VKLogin.getCertificateFingerprint();
   }
 }
 
