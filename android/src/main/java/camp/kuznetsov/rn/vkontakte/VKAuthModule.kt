@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.util.Log
 import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
 import com.vk.api.sdk.VK
@@ -47,19 +48,21 @@ class VKAuthModule(
         }
     }
 
-    val authLauncher = VK.login(reactApplicationContext.currentActivity as androidx.activity.ComponentActivity) { result : VKAuthenticationResult ->
-        when (result) {
-            is VKAuthenticationResult.Success -> {
-                vkAuthToken = result.token
-                authPromise?.resolve(serializeAccessToken(vkAuthToken))
-            }
-            is VKAuthenticationResult.Failed -> {
-                authPromise?.reject(E_AUTH_FAILED, result.exception.localizedMessage)
-            }
+    val authLauncher: ActivityResultLauncher<Collection<VKScope>> by lazy {
+        VK.login(reactApplicationContext.currentActivity as androidx.activity.ComponentActivity) { result: VKAuthenticationResult ->
+            when (result) {
+                is VKAuthenticationResult.Success -> {
+                    vkAuthToken = result.token
+                    authPromise?.resolve(serializeAccessToken(vkAuthToken))
+                }
+                is VKAuthenticationResult.Failed -> {
+                    authPromise?.reject(E_AUTH_FAILED, result.exception.localizedMessage)
+                }
 
+            }
+            authPromise = null
+            return@login
         }
-        authPromise = null
-        return@login
     }
 
     init {
