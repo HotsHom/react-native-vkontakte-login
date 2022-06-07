@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/doomsower/react-native-vkontakte-login.git"
+    "url": "https://github.com/HotsHom/react-native-vkontakte-login.git"
   },
   "keywords": [
     "react",
@@ -40,9 +40,9 @@
   "author": "Konstantin Kuznetsov",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/doomsower/react-native-vkontakte-login/issues"
+    "url": "https://github.com/HotsHom/react-native-vkontakte-login/issues"
   },
-  "homepage": "https://github.com/doomsower/react-native-vkontakte-login#readme",
+  "homepage": "https://github.com/HotsHom/react-native-vkontakte-login#readme",
   "dependencies": {},
   "devDependencies": {
     "@commitlint/config-conventional": "^8.1.0",
