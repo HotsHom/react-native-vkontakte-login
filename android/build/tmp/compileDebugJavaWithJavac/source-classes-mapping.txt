@@ -1,0 +1,4 @@
+camp/kuznetsov/rn/vkontakte/BuildConfig.java
+ camp.kuznetsov.rn.vkontakte.BuildConfig
+camp/kuznetsov/rn/vkontakte/VKAuthPackage.java
+ camp.kuznetsov.rn.vkontakte.VKAuthPackage
