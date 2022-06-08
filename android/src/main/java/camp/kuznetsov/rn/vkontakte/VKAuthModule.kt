@@ -5,6 +5,9 @@ import android.content.Intent
 import android.util.Log
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
 import com.vk.api.sdk.VK
@@ -48,27 +51,32 @@ class VKAuthModule(
         }
     }
 
-    val authLauncher: ActivityResultLauncher<Collection<VKScope>> by lazy {
-        VK.login(reactApplicationContext.currentActivity as androidx.activity.ComponentActivity) { result: VKAuthenticationResult ->
-            when (result) {
-                is VKAuthenticationResult.Success -> {
-                    vkAuthToken = result.token
-                    authPromise?.resolve(serializeAccessToken(vkAuthToken))
-                }
-                is VKAuthenticationResult.Failed -> {
-                    authPromise?.reject(E_AUTH_FAILED, result.exception.localizedMessage)
-                }
-
-            }
-            authPromise = null
-            return@login
-        }
-    }
+    var authLauncher: ActivityResultLauncher<Collection<VKScope>>? = null
 
     init {
         reactContext.addActivityEventListener(this)
         VK.addTokenExpiredHandler(tokenTracker)
+
+        ((reactContext as ReactContext).currentActivity as androidx.activity.ComponentActivity)
+            .lifecycle
+            .addObserver(observerLifecycle {
+                authLauncher = VK.login(reactApplicationContext.currentActivity as androidx.activity.ComponentActivity) { result: VKAuthenticationResult ->
+                    when (result) {
+                        is VKAuthenticationResult.Success -> {
+                            vkAuthToken = result.token
+                            authPromise?.resolve(serializeAccessToken(vkAuthToken))
+                        }
+                        is VKAuthenticationResult.Failed -> {
+                            authPromise?.reject(E_AUTH_FAILED, result.exception.localizedMessage)
+                        }
+
+                    }
+                    authPromise = null
+                    return@login
+                }
+            })
     }
+
 
     @ReactMethod
     fun login(scope: ReadableArray?, promise: Promise ) {
@@ -95,7 +103,7 @@ class VKAuthModule(
 
         try {
             authPromise = promise
-            authLauncher.launch(scopeArray)
+            authLauncher?.launch(scopeArray)
         } catch (e: Exception) {
             promise.reject(E_LOGIN_FATAL, "Error login process with message: ${e.localizedMessage}")
         }
@@ -142,4 +150,12 @@ class VKAuthModule(
     }
 
     override fun onNewIntent(intent: Intent?) {}
+
+    class observerLifecycle(val callback: () -> Unit): LifecycleObserver {
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        fun addListener() {
+            callback.invoke()
+        }
+    }
 }
