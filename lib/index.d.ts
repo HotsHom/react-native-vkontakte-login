@@ -86,5 +86,6 @@ export declare class VK {
      * @returns {Promise<boolean>} Promise that resolves with boolean value
      */
     static isLoggedIn(): Promise<boolean>;
+    static getAccessToken(): Promise<VKLoginResult | null>;
 }
 export default VK;

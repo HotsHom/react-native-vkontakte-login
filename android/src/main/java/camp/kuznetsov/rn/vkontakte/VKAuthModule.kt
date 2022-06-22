@@ -3,22 +3,17 @@ package camp.kuznetsov.rn.vkontakte;
 import android.app.Activity
 import android.content.Intent
 import android.util.Log
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
 import com.vk.api.sdk.VK
+import com.vk.api.sdk.VKPreferencesKeyValueStorage
 import com.vk.api.sdk.VKTokenExpiredHandler
 import com.vk.api.sdk.auth.VKAccessToken
 import com.vk.api.sdk.auth.VKAuthCallback
-import com.vk.api.sdk.auth.VKAuthenticationResult
 import com.vk.api.sdk.auth.VKScope
 import com.vk.api.sdk.exceptions.VKAuthException
-import java.lang.Exception
 import java.util.logging.Logger
+
 
 @ReactModule(name = "VKAuthModule")
 class VKAuthModule(
@@ -27,6 +22,7 @@ class VKAuthModule(
     reactContext
 ), ActivityEventListener {
     override fun getName(): String = "VkontakteManager"
+
     private val E_ACTIVITY_DOES_NOT_EXIST = "E_ACTIVITY_DOES_NOT_EXIST"
     private val E_LOGIN_FATAL = "E_LOGIN_FATAL"
     private val E_AUTH_FAILED = "E_AUTH_FAILED"
@@ -51,32 +47,10 @@ class VKAuthModule(
         }
     }
 
-    var authLauncher: ActivityResultLauncher<Collection<VKScope>>? = null
-
     init {
         reactContext.addActivityEventListener(this)
         VK.addTokenExpiredHandler(tokenTracker)
-
-        ((reactContext as ReactContext).currentActivity as androidx.activity.ComponentActivity)
-            .lifecycle
-            .addObserver(observerLifecycle {
-                authLauncher = VK.login(reactApplicationContext.currentActivity as androidx.activity.ComponentActivity) { result: VKAuthenticationResult ->
-                    when (result) {
-                        is VKAuthenticationResult.Success -> {
-                            vkAuthToken = result.token
-                            authPromise?.resolve(serializeAccessToken(vkAuthToken))
-                        }
-                        is VKAuthenticationResult.Failed -> {
-                            authPromise?.reject(E_AUTH_FAILED, result.exception.localizedMessage)
-                        }
-
-                    }
-                    authPromise = null
-                    return@login
-                }
-            })
     }
-
 
     @ReactMethod
     fun login(scope: ReadableArray?, promise: Promise ) {
@@ -97,13 +71,17 @@ class VKAuthModule(
         }
 
         if (VK.isLoggedIn()) {
-            promise.resolve("User is already login")
+            val token = VKAccessToken.restore(
+                VKPreferencesKeyValueStorage(context = reactApplicationContext)
+            )
+            Log.i("VK", "token=$token")
+            promise.resolve(serializeAccessToken(token))
             return
         }
 
         try {
             authPromise = promise
-            authLauncher?.launch(scopeArray)
+            reactApplicationContext.currentActivity?.let { VK.login(it, scopeArray) }
         } catch (e: Exception) {
             promise.reject(E_LOGIN_FATAL, "Error login process with message: ${e.localizedMessage}")
         }
@@ -113,6 +91,13 @@ class VKAuthModule(
     fun logout(promise: Promise) {
         VK.logout()
         promise.resolve(null)
+    }
+
+    @ReactMethod
+    fun getAccessToken(promise: Promise) {
+        promise.resolve(serializeAccessToken(VKAccessToken.restore(
+            VKPreferencesKeyValueStorage(context = reactApplicationContext)
+        )))
     }
 
     @ReactMethod
@@ -128,13 +113,20 @@ class VKAuthModule(
     ) {
         val vkCallback = object: VKAuthCallback {
             override fun onLogin(token: VKAccessToken) {
-                TODO("Not yet implemented")
+                vkAuthToken = token
+                Logger.getGlobal().warning("Vk auth result: ${token.toString()}")
+                authPromise?.resolve(serializeAccessToken(token))
             }
 
             override fun onLoginFailed(authException: VKAuthException) {
-                TODO("Not yet implemented")
+                Logger.getGlobal().warning("Error vk auth with code error: ${authException.localizedMessage}")
+                authPromise?.reject(E_AUTH_FAILED, authException.localizedMessage)
             }
 
+        }
+
+        if (data == null || !VK.onActivityResult(requestCode, resultCode, data, vkCallback)) {
+            reactApplicationContext.onActivityResult(activity, requestCode, resultCode, data)
         }
     }
 
@@ -150,12 +142,4 @@ class VKAuthModule(
     }
 
     override fun onNewIntent(intent: Intent?) {}
-
-    class observerLifecycle(val callback: () -> Unit): LifecycleObserver {
-
-        @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        fun addListener() {
-            callback.invoke()
-        }
-    }
 }

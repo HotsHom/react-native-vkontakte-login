@@ -105,6 +105,10 @@ export class VK {
   static isLoggedIn(): Promise<boolean> {
     return VKLogin.isLoggedIn();
   }
+
+  static getAccessToken(): Promise<VKLoginResult | null> {
+    return VKLogin.getAccessToken();
+  }
 }
 
 export default VK;
