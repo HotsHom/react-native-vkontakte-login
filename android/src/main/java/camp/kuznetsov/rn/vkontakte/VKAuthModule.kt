@@ -125,7 +125,7 @@ class VKAuthModule(
 
         }
 
-        if (data == null || !VK.onActivityResult(requestCode, resultCode, data, vkCallback)) {
+        if (data == null && !VK.onActivityResult(requestCode, resultCode, data, vkCallback)) {
             reactApplicationContext.onActivityResult(activity, requestCode, resultCode, data)
         }
     }
