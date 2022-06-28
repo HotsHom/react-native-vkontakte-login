@@ -125,9 +125,7 @@ class VKAuthModule(
 
         }
 
-        if (data == null && !VK.onActivityResult(requestCode, resultCode, data, vkCallback)) {
-            reactApplicationContext.onActivityResult(activity, requestCode, resultCode, data)
-        }
+        VK.onActivityResult(requestCode, resultCode, data, vkCallback)
     }
 
     private fun serializeAccessToken(accessToken: VKAccessToken?): WritableMap? {
