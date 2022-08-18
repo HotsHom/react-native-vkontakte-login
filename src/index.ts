@@ -78,6 +78,15 @@ export const enum VKError {
  */
 export class VK {
   /**
+   * Initializes VK SDK from JS code.
+   * You only need to call this once before you call login or logout.
+   * You can skip this call if you've added your VK App ID to your Android's resources or iOS's info.plist.
+   * @param {number|string} vkAppId Your VK app id
+   */
+  static initialize(vkAppId: number | string): void {
+    VKLogin.initialize(typeof vkAppId === 'number' ? vkAppId : Number(vkAppId));
+  }
+  /**
    * Opens VK login dialog either via VK mobile app or via WebView (if app is not installed on the device).
    * If the user is already logged in and has all the requested permissions, then the promise is resolved
    * straight away, without VK dialog.

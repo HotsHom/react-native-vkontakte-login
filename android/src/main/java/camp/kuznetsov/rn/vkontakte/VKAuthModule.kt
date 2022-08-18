@@ -53,6 +53,11 @@ class VKAuthModule(
     }
 
     @ReactMethod
+    fun initialize(promise: Promise) {
+        
+    }
+
+    @ReactMethod
     fun login(scope: ReadableArray?, promise: Promise ) {
         val activity = currentActivity
 
